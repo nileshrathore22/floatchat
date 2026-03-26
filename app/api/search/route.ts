@@ -15,9 +15,19 @@ export async function POST(req: Request) {
 
 
 
+    // First, translate the Firebase UID to the internal database SQLite CUID
+    const dbUser = await prisma.user.findUnique({
+      where: { firebaseUid: decoded.uid },
+      select: { id: true }
+    });
+
+    if (!dbUser) {
+      return NextResponse.json({ ok: true, results: [] });
+    }
+
     // Isolate Search exclusively to this user's sessions to prevent data leakage
     const userSessions = await prisma.chatSession.findMany({
-      where: { userId: decoded.uid },
+      where: { userId: dbUser.id },
       select: { id: true }
     });
     const sessionIds = userSessions.map(s => s.id);
