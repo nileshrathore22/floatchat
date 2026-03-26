@@ -1,7 +1,5 @@
 # FloatChat: Next-Gen AI Assistant
 
-![FloatChat Preview](public/preview.png)
-
 FloatChat is a highly advanced, multi-modal AI chatbot built with a Next.js (Turbo) frontend and a FastAPI Python NLP backend. It supports rich text, live real-time sentiment analysis, document and image vision uploads via Llama 3.2, and automatic "smart reply" generations.
 
 ## Features
