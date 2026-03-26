@@ -65,7 +65,7 @@ export async function POST(req: Request) {
           score: cosineSimilarity(queryEmbedding, parsed),
         };
       })
-      .filter((m) => m.score > 0.70)
+      .filter((m) => m.score > 0.40)
       .sort((a, b) => b.score - a.score)
       .slice(0, 10);
 

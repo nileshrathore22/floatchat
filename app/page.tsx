@@ -443,20 +443,26 @@ export default function AppPage() {
 
         <div className="flex-1 overflow-y-auto px-4 custom-scrollbar">
           <div className="space-y-1 mb-4">
-            {searchResults.length > 0 ? (
-              searchResults.map((r) => (
-                <button
-                  key={r.id}
-                  onClick={() => { setActiveSessionId(r.sessionId); setIsSidebarOpen(false); }}
-                  className="w-full text-left px-3 py-3 rounded-xl hover:bg-slate-800/50 transition-all border border-transparent hover:border-slate-700/30 group"
-                >
-                  <div className="text-sm text-slate-300 truncate font-medium group-hover:text-white">{r.content}</div>
-                  <div className="text-xs text-slate-500 mt-1 flex items-center gap-2">
-                    <span className="w-1.5 h-1.5 bg-blue-500 rounded-full" />
-                    {(r.score * 100).toFixed(0)}% relevant
-                  </div>
-                </button>
-              ))
+            {search.trim().length > 0 ? (
+              searchResults.length > 0 ? (
+                searchResults.map((r) => (
+                  <button
+                    key={r.id}
+                    onClick={() => { setActiveSessionId(r.sessionId); setIsSidebarOpen(false); }}
+                    className="w-full text-left px-3 py-3 rounded-xl hover:bg-slate-800/50 transition-all border border-transparent hover:border-slate-700/30 group"
+                  >
+                    <div className="text-sm text-slate-300 truncate font-medium group-hover:text-white">{r.content}</div>
+                    <div className="text-xs text-slate-500 mt-1 flex items-center gap-2">
+                      <span className="w-1.5 h-1.5 bg-blue-500 rounded-full" />
+                      {(r.score * 100).toFixed(0)}% Match
+                    </div>
+                  </button>
+                ))
+              ) : (
+                <div className="text-center text-sm text-slate-500 py-8 px-4">
+                  No messages found matching "{search}"
+                </div>
+              )
             ) : (
               sessions.map((s) => (
                 <button
