@@ -1,0 +1,45 @@
+generator client {
+  provider   = "prisma-client-js"
+  engineType = "binary"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+model User {
+  id          String        @id @default(cuid())
+  firebaseUid String        @unique
+  email       String?
+  name        String?
+  photoUrl    String?
+  createdAt   DateTime      @default(now())
+  sessions    ChatSession[]
+}
+
+model ChatSession {
+  id        String    @id @default(cuid())
+  userId    String
+  title     String?
+  createdAt DateTime  @default(now())
+  summary   String?
+  user      User      @relation(fields: [userId], references: [id])
+  messages  Message[]
+}
+
+model Message {
+  id           String      @id @default(cuid())
+  sessionId    String
+  role         String
+  content      String
+  createdAt    DateTime    @default(now())
+  intent       String?
+  keywords     String?
+  sentiment    String?
+  embedding    String?
+  confidence   Float?
+  smartReplies String?
+  imageUrl     String?
+  session      ChatSession @relation(fields: [sessionId], references: [id])
+}
