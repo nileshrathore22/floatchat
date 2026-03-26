@@ -12,25 +12,33 @@ function cosineSimilarity(a: number[], b: number[]) {
 
 export async function POST(req: Request) {
   try {
-    await requireAuth(req);
+    const decoded = await requireAuth(req);
     const { query } = await req.json().catch(() => ({}));
 
     if (!query) {
       return NextResponse.json({ ok: true, results: [] });
     }
 
-    // 1️⃣ Embed query
     let queryEmbedding: number[];
     try {
       queryEmbedding = await getEmbedding(query);
     } catch (err) {
       console.error("Embedding error:", err);
-      return NextResponse.json({ ok: true, results: [] }); // Fallback to empty results
+      return NextResponse.json({ ok: true, results: [] }); 
     }
 
-    // 2️⃣ Load messages with embeddings
+    // Isolate Search exclusively to this user's sessions to prevent data leakage
+    const userSessions = await prisma.session.findMany({
+      where: { userId: decoded.uid },
+      select: { id: true }
+    });
+    const sessionIds = userSessions.map(s => s.id);
+
     const messages = await prisma.message.findMany({
-      where: { embedding: { not: null } as any },
+      where: { 
+        embedding: { not: null } as any,
+        sessionId: { in: sessionIds }
+      },
       select: {
         id: true,
         content: true,
@@ -40,16 +48,24 @@ export async function POST(req: Request) {
       },
     });
 
-    // 3️⃣ Score
     const scored = messages
-      .map((m) => ({
-        ...m,
-        score: cosineSimilarity(
-          queryEmbedding,
-          JSON.parse(m.embedding as string)
-        ),
-      }))
-      .filter((m) => m.score > 0.75)
+      .map((m) => {
+        let parsed: number[] = [];
+        try {
+          parsed = JSON.parse(m.embedding as string);
+        } catch (e) {}
+
+        // Skip malformed/corrupted arrays seamlessly
+        if (!Array.isArray(parsed) || parsed.length === 0) {
+           return { ...m, score: 0 };
+        }
+
+        return {
+          ...m,
+          score: cosineSimilarity(queryEmbedding, parsed),
+        };
+      })
+      .filter((m) => m.score > 0.70)
       .sort((a, b) => b.score - a.score)
       .slice(0, 10);
 

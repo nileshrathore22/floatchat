@@ -23,7 +23,8 @@ import {
   Check,
   RefreshCw,
   ThumbsUp,
-  ThumbsDown
+  ThumbsDown,
+  Trash2
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -192,6 +193,18 @@ export default function AppPage() {
   }, [messages]);
 
   /* ---------- ACTIONS ---------- */
+  const deleteSession = async (e: React.MouseEvent, id: string) => {
+    e.stopPropagation();
+    if (!confirm("Are you sure you want to delete this chat permanently?")) return;
+    setSessions(p => p.filter(s => s.id !== id));
+    if (activeSessionId === id) {
+      setMessages([]);
+      setActiveSessionId(null);
+    }
+    // Fire and forget cleanly
+    authedFetch(`/api/sessions/${id}`, { method: "DELETE" }).catch(err => console.error(err));
+  };
+
   const newChat = async () => {
     setBusy(true);
     try {
@@ -334,6 +347,11 @@ export default function AppPage() {
             setMessages(prev => {
               // Only update if we haven't switched to a different chat
               if (!prev.some(m => m.id === assistantTempId)) return prev;
+
+              // FIX: If the DB hasn't finished saving the massive ML payload, its fetch payload will be smaller than
+              // the number of messages dynamically placed on the UI screen. Don't overwrite the stream with an old DB snapshot!
+              if (syncData.messages.length < prev.length) return prev;
+
               return syncData.messages;
             });
           }
@@ -444,18 +462,25 @@ export default function AppPage() {
                 <button
                   key={s.id}
                   onClick={() => { setActiveSessionId(s.id); setIsSidebarOpen(false); }}
-                  className={`w-full text-left px-3 py-3 rounded-xl transition-all border ${
+                  className={`w-full text-left px-3 py-3 rounded-xl transition-all border group relative ${
                     s.id === activeSessionId 
                       ? "bg-blue-600/10 border-blue-500/30 text-white" 
                       : "hover:bg-slate-800/50 border-transparent text-slate-400 hover:text-slate-200"
                   }`}
                 >
                   <div className="flex items-center gap-3">
-                    <MessageSquare className={`w-4 h-4 ${s.id === activeSessionId ? "text-blue-400" : "text-slate-500"}`} />
-                    <div className="flex-1 overflow-hidden">
+                    <MessageSquare className={`w-4 h-4 shrink-0 ${s.id === activeSessionId ? "text-blue-400" : "text-slate-500"}`} />
+                    <div className="flex-1 overflow-hidden pr-6">
                       <div className="text-sm font-medium truncate">{s.title ?? "New Conversation"}</div>
                       <div className="text-[10px] opacity-50 mt-0.5">{new Date(s.createdAt).toLocaleDateString()}</div>
                     </div>
+                  </div>
+                  <div 
+                    onClick={(e) => deleteSession(e, s.id)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 p-1.5 rounded-md hover:bg-slate-700/50 text-slate-500 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-all active:scale-95"
+                    title="Delete Chat"
+                  >
+                    <Trash2 className="w-4 h-4" />
                   </div>
                 </button>
               ))
