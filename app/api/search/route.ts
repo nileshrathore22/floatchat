@@ -28,7 +28,7 @@ export async function POST(req: Request) {
     }
 
     // Isolate Search exclusively to this user's sessions to prevent data leakage
-    const userSessions = await prisma.session.findMany({
+    const userSessions = await prisma.chatSession.findMany({
       where: { userId: decoded.uid },
       select: { id: true }
     });
