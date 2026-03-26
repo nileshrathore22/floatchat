@@ -18,7 +18,12 @@ import {
   Settings,
   Paperclip,
   X,
-  Menu
+  Menu,
+  Copy,
+  Check,
+  RefreshCw,
+  ThumbsUp,
+  ThumbsDown
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -98,6 +103,13 @@ export default function AppPage() {
   const [filePreview, setFilePreview] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [copiedId, setCopiedId] = useState<string | null>(null);
+
+  const handleCopy = (id: string, text: string) => {
+    navigator.clipboard.writeText(text);
+    setCopiedId(id);
+    setTimeout(() => setCopiedId(null), 2000);
+  };
 
   useEffect(() => {
     if (typeof window !== "undefined" && window.innerWidth >= 768) {
@@ -596,6 +608,49 @@ export default function AppPage() {
                         </div>
                       )}
                     </div>
+
+                    {isAi && m.content && m.content.length > 0 && (
+                      <div className="flex items-center gap-1.5 mt-1 text-slate-500">
+                        <button 
+                          onClick={() => handleCopy(m.id, m.content)} 
+                          className="p-1.5 hover:bg-slate-800 hover:text-slate-300 rounded-lg transition-all"
+                          title="Copy"
+                        >
+                          {copiedId === m.id ? <Check className="w-3.5 h-3.5 text-green-500" /> : <Copy className="w-3.5 h-3.5" />}
+                        </button>
+                        <button 
+                          onClick={() => {
+                            let lastPrompt = "";
+                            for (let j = i - 1; j >= 0; j--) {
+                              if (messages[j].role === "user") {
+                                lastPrompt = messages[j].content;
+                                break;
+                              }
+                            }
+                            if (lastPrompt) {
+                              setText(lastPrompt);
+                              setTimeout(send, 100);
+                            }
+                          }}
+                          className="p-1.5 hover:bg-slate-800 hover:text-slate-300 rounded-lg transition-all"
+                          title="Retry Response"
+                        >
+                          <RefreshCw className="w-3.5 h-3.5" />
+                        </button>
+                        <button 
+                          className="p-1.5 hover:bg-slate-800 hover:text-slate-300 rounded-lg transition-all"
+                          title="Helpful"
+                        >
+                          <ThumbsUp className="w-3.5 h-3.5" />
+                        </button>
+                        <button 
+                          className="p-1.5 hover:bg-slate-800 hover:text-slate-300 rounded-lg transition-all"
+                          title="Not Helpful"
+                        >
+                          <ThumbsDown className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    )}
 
                     {isAi && Array.isArray(m.smartReplies) && m.smartReplies.length > 0 && (
                       <div className="flex flex-wrap gap-2 mt-2">
