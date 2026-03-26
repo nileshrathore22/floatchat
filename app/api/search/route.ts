@@ -1,14 +1,8 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAuth } from "@/lib/requireAuth";
-import { getEmbedding } from "@/lib/embeddingClient";
 
-function cosineSimilarity(a: number[], b: number[]) {
-  const dot = a.reduce((s, x, i) => s + x * b[i], 0);
-  const magA = Math.sqrt(a.reduce((s, x) => s + x * x, 0));
-  const magB = Math.sqrt(b.reduce((s, x) => s + x * x, 0));
-  return dot / (magA * magB);
-}
+// Cleaned up semantic search utilities internally in favor of absolute lexical matching
 
 export async function POST(req: Request) {
   try {
@@ -19,13 +13,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ ok: true, results: [] });
     }
 
-    let queryEmbedding: number[];
-    try {
-      queryEmbedding = await getEmbedding(query);
-    } catch (err) {
-      console.error("Embedding error:", err);
-      return NextResponse.json({ ok: true, results: [] }); 
-    }
+
 
     // Isolate Search exclusively to this user's sessions to prevent data leakage
     const userSessions = await prisma.chatSession.findMany({
@@ -34,40 +22,30 @@ export async function POST(req: Request) {
     });
     const sessionIds = userSessions.map(s => s.id);
 
+    // Fetch ALL metadata for the user's sessions to run a lightning-fast memory filter
     const messages = await prisma.message.findMany({
       where: { 
-        embedding: { not: null } as any,
         sessionId: { in: sessionIds }
       },
       select: {
         id: true,
         content: true,
-        embedding: true,
         sessionId: true,
         createdAt: true,
       },
+      orderBy: { createdAt: 'desc' }
     });
 
+    const loweredQuery = query.toLowerCase().trim();
+
+    // Execute case-insensitive lexical substring matching
     const scored = messages
-      .map((m) => {
-        let parsed: number[] = [];
-        try {
-          parsed = JSON.parse(m.embedding as string);
-        } catch (e) {}
-
-        // Skip malformed/corrupted arrays seamlessly
-        if (!Array.isArray(parsed) || parsed.length === 0) {
-           return { ...m, score: 0 };
-        }
-
-        return {
-          ...m,
-          score: cosineSimilarity(queryEmbedding, parsed),
-        };
-      })
-      .filter((m) => m.score > 0.40)
-      .sort((a, b) => b.score - a.score)
-      .slice(0, 10);
+      .filter((m) => m.content.toLowerCase().includes(loweredQuery))
+      .map((m) => ({
+        ...m,
+        score: 1.0, // Hardcoded 100% Match for the UI
+      }))
+      .slice(0, 15);
 
     return NextResponse.json({ ok: true, results: scored });
   } catch (e: any) {
