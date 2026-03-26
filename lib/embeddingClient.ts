@@ -1,5 +1,5 @@
 export async function getEmbedding(text: string): Promise<number[]> {
-  const res = await fetch(`${process.env.NLP_SERVICE_URL}/embed`, {
+  const res = await fetch(`http://127.0.0.1:8000/embed`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ text }),
