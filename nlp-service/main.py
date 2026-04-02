@@ -26,10 +26,7 @@ sentiment_pipe = pipeline(
     model="distilbert-base-uncased-finetuned-sst-2-english"
 )
 
-topic_pipe = pipeline(
-    "zero-shot-classification",
-    model="facebook/bart-large-mnli"
-)
+# Removed topic_pipe because it was unused and takes 1.6GB of RAM, crashing the 1GB server.
 
 embedder = SentenceTransformer("sentence-transformers/all-MiniLM-L6-v2")
 
