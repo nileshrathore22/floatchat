@@ -1,5 +1,5 @@
 export async function summarizeMessages(texts: string[]) {
-  const res = await fetch("http://127.0.0.1:8000/summarize", {
+  const res = await fetch(`${process.env.NLP_SERVICE_URL || "http://127.0.0.1:8000"}/summarize`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ texts }),

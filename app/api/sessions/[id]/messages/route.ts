@@ -97,7 +97,7 @@ export async function POST(
     let similarMessages: { role: string; content: string }[] = [];
 
     // 🔹 Call FastAPI Immediately
-    const aiRes = await fetch("http://127.0.0.1:8000/generate", {
+    const aiRes = await fetch(`${process.env.NLP_SERVICE_URL || "http://127.0.0.1:8000"}/generate`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -160,7 +160,7 @@ export async function POST(
       // 🔹 Evaluation (Hallucination & Confidence)
       let hallucinationScore = 0;
       try {
-        const checkRes = await fetch("http://127.0.0.1:8000/generate", {
+        const checkRes = await fetch(`${process.env.NLP_SERVICE_URL || "http://127.0.0.1:8000"}/generate`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -201,7 +201,7 @@ export async function POST(
       const messageCount = await prisma.message.count({ where: { sessionId } });
       if (messageCount === 2) {
         try {
-          const titleRes = await fetch("http://127.0.0.1:8000/generate-title", {
+          const titleRes = await fetch(`${process.env.NLP_SERVICE_URL || "http://127.0.0.1:8000"}/generate-title`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ prompt: content }),
@@ -220,7 +220,7 @@ export async function POST(
       });
       if (allMessages.length >= 6) {
         try {
-          const summaryRes = await fetch("http://127.0.0.1:8000/summarize", {
+          const summaryRes = await fetch(`${process.env.NLP_SERVICE_URL || "http://127.0.0.1:8000"}/summarize`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ texts: allMessages.map(m => `${m.role}: ${m.content}`) }),
