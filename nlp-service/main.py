@@ -90,6 +90,10 @@ class SummarizeRequest(BaseModel):
 # Routes
 # --------------------------------------------------
 
+@app.get("/")
+def health_check():
+    return {"status": "healthy"}
+
 @app.post("/analyze", response_model=AnalyzeResponse)
 def analyze(req: AnalyzeRequest):
     text = req.text.strip()

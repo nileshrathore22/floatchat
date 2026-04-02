@@ -9,6 +9,10 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy all source code
 COPY . .
 
+# Preserve HuggingFace models in the app directory so they aren't lost by user limits/permissions
+ENV HF_HOME=/app/.cache
+RUN mkdir -p $HF_HOME
+
 # PRE-DOWNLOAD THE ML MODELS DURING BUILD!
 # This resolves Railway's looping crash by ensuring the heavy downloads
 # don't happen while Railway is waiting for the server to boot up on the port.
